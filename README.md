@@ -48,7 +48,8 @@ docker compose up -d
 * uv
 
 ```bash
-source .venv/bin/activate
+source .venv/bin/activate # mac 
+.venv\Scripts\activate # win 
 ```
 
 ### tests

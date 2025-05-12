@@ -1,7 +1,7 @@
 [project]
-name = "project-temp"
-version = "0.1.0"
-description = "Add your description here"
+name = "Zogents"
+version = "0.0.1"
+description = "Zogents is an AI agent built with agno to interact with Zotero."
 authors = [
     {name = "AdamZh0u", email = "zhouzz400@gmail.com"}
 ]
@@ -9,6 +9,7 @@ license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "agno>=1.4.6",
     "cairosvg>=2.7.1",
     "jupyterlab>=4.3.5",
     "loguru>=0.7.3",
