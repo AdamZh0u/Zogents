@@ -11,6 +11,8 @@ requires-python = ">=3.11"
 dependencies = [
     "agno>=1.4.6",
     "cairosvg>=2.7.1",
+    "docling>=2.15.1",
+    "fastembed>=0.7.0",
     "jupyterlab>=4.3.5",
     "loguru>=0.7.3",
     "matplotlib>=3.10.1",
@@ -19,6 +21,7 @@ dependencies = [
     "pandas>=2.2.3",
     "pillow>=10.4.0",
     "pyzotero>=1.6.11",
+    "qdrant-client>=1.14.2",
     "scikit-learn>=1.6.1",
     "tqdm>=4.67.1",
     "whoosh>=2.7.4",
@@ -57,5 +60,5 @@ version_provider = "pep621"
 update_changelog_on_bump = true
 major_version_zero = true
 
-[tool.uv]
-cache-dir = "E:\\.uv_cache" # 缓存目录 需要在同一个硬盘
+# [tool.uv]
+# cache-dir = "E:\\.uv_cache" # win 缓存目录 需要在同一个硬盘
