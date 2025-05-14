@@ -15,10 +15,15 @@ dependencies = [
     "loguru>=0.7.3",
     "matplotlib>=3.10.1",
     "numpy>=2.2.3",
+    "openai>=1.78.1",
     "pandas>=2.2.3",
     "pillow>=10.4.0",
+    "pyzotero>=1.6.11",
     "scikit-learn>=1.6.1",
     "tqdm>=4.67.1",
+    "whoosh>=2.7.4",
+    "yfinance>=0.2.61",
+    "zolocal>=0.2.0",
 ]
 
 [dependency-groups]
@@ -26,8 +31,10 @@ dependencies = [
 # uv add --group dev pytest
 # uc sync --group docs
 dev = [
+    "httpretty>=1.1.4",
     "pre-commit>=4.1.0",
     "pytest>=8.3.5",
+    "python-dateutil>=2.9.0.post0",
 ]
 docs = [
     "mkdocs>=1.6.1",
@@ -49,3 +56,6 @@ version_scheme = "pep440"
 version_provider = "pep621"
 update_changelog_on_bump = true
 major_version_zero = true
+
+[tool.uv]
+cache-dir = "E:\\.uv_cache" # 缓存目录 需要在同一个硬盘

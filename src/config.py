@@ -6,8 +6,39 @@
 @File    : const.py
 """
 
+import glob
+import os
+import tomllib
 from pathlib import Path
+
 from loguru import logger
+
+# Base config file that contains default settings
+CONFIG_DIR = "./config"
+# Environment variable to control which config to load
+ENV = os.getenv("ENV", "dev")
+
+
+def load_config(env: str = ENV):
+    """
+    Load configuration from the config directory.
+    :param env: str, the environment to load the config for
+    :return: dict, the loaded configuration
+    """
+    # 首先加载基础配置
+    final_config = {}
+    for file in glob.glob(os.path.join(CONFIG_DIR, "*.toml")):
+        with open(file, "rb") as f:
+            config = tomllib.load(f)
+        final_config.update(config)
+    return final_config
+
+
+try:
+    CONFIG = load_config(ENV)
+except (TypeError, ValueError) as e:
+    logger.error(f"Error loading configuration: {e}")
+    raise e
 
 
 def get_project_root():
@@ -30,7 +61,19 @@ def get_project_root():
         current_path = parent_path
 
 
+def get_logger():
+    return logger
+
+
 ROOT = get_project_root()
 PATH_DATA = ROOT / "data"
 PATH_NOOTBOOKS = ROOT / "notebooks"
 PATH_LOG = ROOT / "logs"
+
+if __name__ == "__main__":
+    print(CONFIG)
+
+    # print(os.environ["PYTHONPATH"])
+    # print(os.environ["PATH"])
+    print(ROOT)
+    # print(os.environ["ENV_PARM"])  # params in .env file

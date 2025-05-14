@@ -1,0 +1,11 @@
+[zotero]
+library_id = "********"
+library_type = "user"
+api_key = "*************************"
+
+[agno]
+api_key = "sk-ant-api03-6666666666666666666666666666666666666666666666666666666666666666"
+
+
+[openai]
+api_key = "sk-proj-"

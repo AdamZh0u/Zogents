@@ -1,0 +1,85 @@
+{
+    "key": "TLV66I28",
+    "version": 58348,
+    "library": {
+        "type": "user",
+        "id": 11397903,
+        "name": "AdamZh0u",
+        "links": {
+            "alternate": {
+                "href": "https://www.zotero.org/adamzh0u",
+                "type": "text/html"
+            }
+        }
+    },
+    "links": {
+        "self": {
+            "href": "https://api.zotero.org/users/11397903/items/TLV66I28",
+            "type": "application/json"
+        },
+        "alternate": {
+            "href": "https://www.zotero.org/adamzh0u/items/TLV66I28",
+            "type": "text/html"
+        }
+    },
+    "meta": {
+        "creatorSummary": "Gallotti et al.",
+        "parsedDate": "2024-12-24",
+        "numChildren": 1
+    },
+    "data": {
+        "key": "TLV66I28",
+        "version": 58348,
+        "itemType": "journalArticle",
+        "title": "Distorted insights from human mobility data",
+        "creators": [
+            {
+                "creatorType": "author",
+                "firstName": "Riccardo",
+                "lastName": "Gallotti"
+            },
+            {
+                "creatorType": "author",
+                "firstName": "Davide",
+                "lastName": "Maniscalco"
+            },
+            {
+                "creatorType": "author",
+                "firstName": "Marc",
+                "lastName": "Barthelemy"
+            },
+            {
+                "creatorType": "author",
+                "firstName": "Manlio",
+                "lastName": "De Domenico"
+            }
+        ],
+        "abstractNote": "Abstract\n            The description of human mobility is at the core of many fundamental applications ranging from urbanism and transportation to epidemics containment. Data about human movements, once scarce, is now widely available thanks to new sources such as phone call detail records, GPS devices, or Smartphone apps. Nevertheless, it is still common to rely on a single dataset by implicitly assuming that the statistical properties observed are robust regardless of data gathering and processing techniques. Here, we test this assumption on a broad scale by comparing human mobility datasets obtained from 7 different data-sources, tracing 500+ millions individuals in 145 countries. We report wide quantifiable differences in the resulting mobility networks and in the displacement distribution. These variations impact processes taking place on these networks like epidemic spreading. Our results point to the need for disclosing the data processing and, overall, to follow good practices to ensure robust and reproducible results.",
+        "publicationTitle": "Communications Physics",
+        "volume": "7",
+        "issue": "1",
+        "pages": "421",
+        "date": "2024-12-24",
+        "series": "",
+        "seriesTitle": "",
+        "seriesText": "",
+        "journalAbbreviation": "Commun Phys",
+        "language": "en",
+        "DOI": "10.1038/s42005-024-01909-x",
+        "ISSN": "2399-3650",
+        "shortTitle": "",
+        "url": "https://www.nature.com/articles/s42005-024-01909-x",
+        "accessDate": "2025-02-26T15:03:08Z",
+        "archive": "",
+        "archiveLocation": "",
+        "libraryCatalog": "DOI.org (Crossref)",
+        "callNumber": "",
+        "rights": "",
+        "extra": "",
+        "tags": [],
+        "collections": ["P5BVNYNA"],
+        "relations": {},
+        "dateAdded": "2025-02-26T15:03:08Z",
+        "dateModified": "2025-02-26T15:03:08Z"
+    }
+}
