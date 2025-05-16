@@ -12,6 +12,7 @@ from docling.backend.docling_parse_v2_backend import DoclingParseV2DocumentBacke
 # from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 from docling.datamodel.base_models import ConversionStatus
 from docling.datamodel.document import ConversionResult
+from docling.document_converter import DocumentConverter
 
 _log = logging.getLogger(__name__)
 
