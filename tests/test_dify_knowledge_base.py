@@ -1,25 +1,24 @@
 import os
 
-from src.dify_rag.dify_knowledge_base import DifyKnowledgeBase, Pipeline
+from src.dify_knowledge_base import DifyKnowledgeBase
+from src.pipelines.files2dify import Pipeline
 
 dify_knowledge_base = DifyKnowledgeBase()
 
 # res path
 res_dir = "tests/response"
-docs_dir = "tests/docs"
+docs_dir = "tests/data"
 if not os.path.exists(res_dir):
     os.makedirs(res_dir, exist_ok=True)
 if not os.path.exists(docs_dir):
     os.makedirs(docs_dir, exist_ok=True)
 
-
-pipeline = Pipeline()
+pipeline = Pipeline(kb_name="Zotero")
 file_path = os.path.join(docs_dir, "dummy.md")
 metadata_input = {
-    "permissions": "1",
-    "expiration_time": None,
+    "tags": "dummy",
 }
-res = pipeline.run(file_path, metadata_input)
+res = pipeline.run_onefile(file_path, metadata_input)
 print(res)
 
 # # get knowledge base and write res to tests
