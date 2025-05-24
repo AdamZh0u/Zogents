@@ -116,17 +116,7 @@ class Pipeline:
             if not file_path.exists():
                 logger.warning(f"File not found: {file_path}")
                 continue
-            metadata_input = {
-                "itemKey": att.itemKey,
-                "title": att.title,
-                "parentItemKey": att.parentItem.key,
-                "parentItemTitle": att.parentItem.title,
-                "parentItemTags": (
-                    ", ".join(att.parentItem.tags) if att.parentItem.tags else ""
-                ),
-                "parentItemType": str(att.parentItem.itemTypeID),
-                "relpath": att.relpath,
-            }
+            metadata_input = att.to_dict()
             try:
                 doc_id = self.upload_onefile(file_path, metadata_input)
                 self.document_id_dict[att.itemKey] = doc_id
@@ -138,8 +128,9 @@ class Pipeline:
             doc_id = self.document_id_dict.get(att.itemKey)
             if doc_id:
                 try:
+                    metadata_input = att.to_dict()
                     metadata_vlist = []
-                    for k, v in att.parentItem.items():
+                    for k, v in metadata_input.items():
                         if k in self.metadata_id_dict:
                             metadata_vlist.append(
                                 {"id": self.metadata_id_dict[k], "name": k, "value": v}

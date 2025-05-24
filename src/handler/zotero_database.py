@@ -49,11 +49,26 @@ class Attachment:
             parentItem=ParentItem.from_dict(d["parentItem"]),
         )
 
+    def to_dict(self):
+        return  {
+                "itemKey": self.itemKey,
+                "title": self.title,
+                "parentItemKey": self.parentItem.key,
+                "parentItemTitle": self.parentItem.title,
+                "parentItemTags": (
+                    ", ".join(self.parentItem.tags) if self.parentItem.tags else ""
+                ),
+                "parentItemType": str(self.parentItem.itemTypeID),
+                "relpath": self.relpath,
+            }
+
     @property
     def abspath(self) -> Path:
         """
         Get the absolute path to the attachment file.
         """
+        if self.relpath is None:
+            return Path("")
         return Path(CONFIG["zotero"]["data_dir"], self.relpath)
 
     @property

@@ -1,21 +1,20 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, PropertyMock
 import os
-from src.pipeline.zdb2dify import Pipeline, PipeConfig, Attachment, ParentItem
+from src.pipeline.zdb2dify import Pipeline, PipeConfig
+from src.handler.zotero_database import ParentItem, Attachment
 
 
 class TestPipeline(unittest.TestCase):
     def setUp(self):
-        self.config = PipeConfig(
-            kb_name="TestKB",
-            tag_pattern="#test/%",
-            archive_path="test_zdb_archive.json",
-        )
-        self.pipeline = Pipeline(self.config)
-        self.pipeline.dify_kb = MagicMock()
-        self.pipeline.dataset_id = "ds1"
-        self.pipeline._document_id_dict = {}
-        self.pipeline._metadata_id_dict = {
+        # Mock all external dependencies before Pipeline instantiation
+        self.dkb_patcher = patch('src.pipeline.zdb2dify.DifyKnowledgeBase', autospec=True)
+        self.mock_dkb_cls = self.dkb_patcher.start()
+        self.mock_dkb = self.mock_dkb_cls.return_value
+        
+        # Mock properties to avoid HTTP calls
+        type(self.mock_dkb).documents = PropertyMock(return_value={"A": "docid1", "B": "docid2"})
+        type(self.mock_dkb).metadata = PropertyMock(return_value={
             "itemKey": 1,
             "title": 2,
             "parentItemKey": 3,
@@ -23,9 +22,30 @@ class TestPipeline(unittest.TestCase):
             "parentItemTags": 5,
             "parentItemType": 6,
             "relpath": 7,
-        }
+        })
+        self.mock_dkb.dataset_id = "ds1"
+        
+        # Mock methods
+        self.mock_dkb.upload_document_by_file.return_value = "docid1"
+        self.mock_dkb.update_document_metadata.return_value = {"code": 200}
+        self.mock_dkb.delete_document.return_value = None
+        self.mock_dkb.create_metadata.return_value = {"id": 2, "name": "newmeta"}
+        
+        # Mock ZoteroConn to avoid database dependency
+        self.zotero_patcher = patch('src.pipeline.zdb2dify.ZoteroConn')
+        self.mock_zotero_cls = self.zotero_patcher.start()
+        self.mock_zotero = self.mock_zotero_cls.return_value
+        
+        self.config = PipeConfig(
+            kb_name="TestKB",
+            tag_pattern="#test/%",
+            archive_path="test_zdb_archive.json",
+        )
+        self.pipeline = Pipeline(self.config)
 
     def tearDown(self):
+        self.dkb_patcher.stop()
+        self.zotero_patcher.stop()
         if os.path.exists(self.config.archive_path):
             os.remove(self.config.archive_path)
 
@@ -56,21 +76,22 @@ class TestPipeline(unittest.TestCase):
         self.assertIn(a1, to_update)
         self.assertIn(b2, to_delete)
 
-    @patch.object(Pipeline, "upload_onefile", return_value="docid1")
-    @patch.object(Pipeline, "ensure_metadata_fields_exist")
-    def test_apply_sync_actions(self, mock_ensure, mock_upload):
+    def test_apply_sync_actions(self):
         a1 = self.make_attachment("A", ["t1"])
         a2 = self.make_attachment("B", ["t2"])
-        self.pipeline._document_id_dict["A"] = "docid1"
-        self.pipeline.dify_kb.update_document_metadata = MagicMock()
-        self.pipeline.dify_kb.delete_document = MagicMock()
-        to_upload = [a2]
-        to_update = [a1]
-        to_delete = []
-        result = self.pipeline.apply_sync_actions(to_upload, to_update, to_delete)
-        self.assertIn("B", result["upload"])
-        self.assertIn("A", result["update"])
-        self.pipeline.dify_kb.update_document_metadata.assert_called()
+        
+        # Mock upload_onefile to return doc_id
+        with patch.object(self.pipeline, 'upload_onefile', return_value="docid1") as mock_upload:
+            # Mock Path.exists to return True for file path checks
+            with patch('pathlib.Path.exists', return_value=True):
+                to_upload = [a2]
+                to_update = [a1]
+                to_delete = []
+                result = self.pipeline.apply_sync_actions(to_upload, to_update, to_delete)
+                
+                self.assertIn("B", result["upload"])
+                self.assertIn("A", result["update"])
+                self.mock_dkb.update_document_metadata.assert_called()
 
     def test_save_and_get_archived_attachments(self):
         a1 = self.make_attachment("A", ["t1"])
@@ -79,23 +100,31 @@ class TestPipeline(unittest.TestCase):
         self.assertIn("A", archived)
         self.assertEqual(archived["A"].itemKey, "A")
 
-    @patch.object(
-        Pipeline,
-        "apply_sync_actions",
-        return_value={"upload": ["A"], "update": [], "delete": []},
-    )
-    @patch.object(Pipeline, "get_current_attachments")
-    @patch.object(Pipeline, "get_archived_attachments")
-    @patch.object(Pipeline, "save_local_archive")
-    def test_sync_zotero_attachments(
-        self, mock_save, mock_get_archived, mock_get_current, mock_apply
-    ):
+    def test_sync_zotero_attachments(self):
         a1 = self.make_attachment("A", ["t1"])
-        mock_get_current.return_value = {"A": a1}
-        mock_get_archived.return_value = {}
-        self.pipeline.sync_zotero_attachments()
-        mock_apply.assert_called()
-        mock_save.assert_called()
+        
+        with patch.object(self.pipeline, 'get_current_attachments', return_value={"A": a1}):
+            with patch.object(self.pipeline, 'get_archived_attachments', return_value={}):
+                with patch.object(self.pipeline, 'apply_sync_actions', 
+                                  return_value={"upload": ["A"], "update": [], "delete": []}) as mock_apply:
+                    with patch.object(self.pipeline, 'save_local_archive') as mock_save:
+                        self.pipeline.sync_zotero_attachments()
+                        mock_apply.assert_called()
+                        mock_save.assert_called()
+
+    def test_upload_onefile(self):
+        # Test the actual upload_onefile method
+        dummy_file = "dummy.md"
+        metadata_input = {"itemKey": "testkey", "title": "Test Title"}
+        
+        # Mock Path.exists to return True
+        with patch('pathlib.Path.exists', return_value=True):
+            res = self.pipeline.upload_onefile(dummy_file, metadata_input)
+        
+        # upload_onefile returns doc_id (string)
+        self.assertEqual(res, "docid1")
+        self.mock_dkb.upload_document_by_file.assert_called()
+        self.mock_dkb.update_document_metadata.assert_called()
 
 
 if __name__ == "__main__":

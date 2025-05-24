@@ -1,8 +1,8 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, PropertyMock
 import os
 from src.handler.dify_knowledge_base import DifyKnowledgeBase, Document
-from src.pipeline.files2dify import Pipeline
+from src.pipeline.zdb2dify import Pipeline, PipeConfig
 
 
 def ensure_dummy_file(path, content="# Dummy test file\nThis is a test."):
@@ -65,42 +65,55 @@ class TestDifyKnowledgeBase(unittest.TestCase):
         self.assertEqual(res["name"], "newmeta")
 
 
-class TestPipeline(unittest.TestCase):
+class TestZdb2DifyPipeline(unittest.TestCase):
     def setUp(self):
-        self.pipeline = Pipeline(kb_name="Zotero")
-        self.pipeline.dify_knowledge_base = MagicMock()
-        self.pipeline.dataset_id = "id1"
-        self.pipeline.metadata_id_dict = {"tags": 1}
-        self.pipeline.document_id_dict = {"dummy.md": "docid1"}
+        # Mock all external dependencies before Pipeline instantiation
+        self.dkb_patcher = patch('src.pipeline.zdb2dify.DifyKnowledgeBase', autospec=True)
+        self.mock_dkb_cls = self.dkb_patcher.start()
+        self.mock_dkb = self.mock_dkb_cls.return_value
+        
+        # Mock properties to avoid HTTP calls
+        type(self.mock_dkb).documents = PropertyMock(return_value={"testkey": "docid1"})
+        type(self.mock_dkb).metadata = PropertyMock(return_value={"itemKey": 1, "title": 2, "tags": 3})
+        self.mock_dkb.dataset_id = "ds1"
+        
+        # Mock methods
+        self.mock_dkb.upload_document_by_file.return_value = "docid1"
+        self.mock_dkb.update_document_metadata.return_value = {"code": 200}
+        self.mock_dkb.delete_document.return_value = None
+        self.mock_dkb.create_metadata.return_value = {"id": 2, "name": "newmeta"}
+        
+        # Mock ZoteroConn to avoid database dependency
+        self.zotero_patcher = patch('src.pipeline.zdb2dify.ZoteroConn')
+        self.mock_zotero_cls = self.zotero_patcher.start()
+        self.mock_zotero = self.mock_zotero_cls.return_value
+        
+        self.pipeline = Pipeline(PipeConfig(kb_name="TestKB"))
 
-    @patch(
-        "src.pipelines.files2dify.DifyKnowledgeBase.upload_document_by_file",
-        return_value={"document": {"id": "docid1", "name": "dummy.md"}},
-    )
-    @patch(
-        "src.pipelines.files2dify.DifyKnowledgeBase.update_document_metadata",
-        return_value={"code": 200},
-    )
-    def test_upload_onefile(self, mock_update, mock_upload):
-        dummy_file = "dummy.md"
-        metadata_input = {"tags": "dummy"}
-        res = self.pipeline.upload_onefile(dummy_file, metadata_input)
-        self.assertIn("upload", res)
-        self.assertIn("update_metadata", res)
+    def tearDown(self):
+        self.dkb_patcher.stop()
+        self.zotero_patcher.stop()
 
-    @patch(
-        "src.pipelines.files2dify.DifyKnowledgeBase.upload_document_by_file",
-        return_value={"document": {"id": "docid1", "name": "dummy.md"}},
-    )
-    @patch(
-        "src.pipelines.files2dify.DifyKnowledgeBase.update_document_metadata",
-        return_value={"code": 200},
-    )
-    def test_upload_batchfile(self, mock_update, mock_upload):
+    def test_upload_onefile(self):
         dummy_file = "dummy.md"
-        metadata_input = {"tags": "dummy"}
-        res = self.pipeline.upload_batchfile([dummy_file], metadata_input)
-        self.assertIsInstance(res, list)
+        metadata_input = {"itemKey": "testkey", "title": "Test Title"}
+        
+        # Mock Path.exists to return True
+        with patch('pathlib.Path.exists', return_value=True):
+            res = self.pipeline.upload_onefile(dummy_file, metadata_input)
+        
+        # zdb2dify.Pipeline.upload_onefile returns doc_id (string), not dict
+        self.assertEqual(res, "docid1")
+        self.mock_dkb.upload_document_by_file.assert_called_once()
+        self.mock_dkb.update_document_metadata.assert_called_once()
+
+    def test_ensure_metadata_fields_exist(self):
+        required_fields = {"newfield": "string", "itemKey": "string"}  # itemKey exists, newfield doesn't
+        
+        self.pipeline.ensure_metadata_fields_exist(required_fields)
+        
+        # Should only create metadata for fields that don't exist
+        self.mock_dkb.create_metadata.assert_called_once_with("ds1", "newfield", "string")
 
 
 if __name__ == "__main__":
