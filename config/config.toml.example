@@ -1,11 +1,7 @@
 [zotero]
-library_id = "********"
-library_type = "user"
-api_key = "*************************"
+data_dir = "/Users/test/Zotero/"
 
-[agno]
-api_key = "sk-ant-api03-6666666666666666666666666666666666666666666666666666666666666666"
-
-
-[ai.openai]
-api_key =
+[dify.knowledge_base]
+dataset_name = "demo" # knowledge_base name
+api_key = "" # knowledge_base api  key
+base_url = "" # knowledge_base url

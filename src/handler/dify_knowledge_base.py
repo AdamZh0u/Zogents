@@ -87,19 +87,65 @@ class Document:
         return f"<Document {attrs}>"
 
 
+@dataclass
+class KBConfig:
+    api_key: str = CONFIG["dify"]["knowledge_base"]["api_key"]
+    base_url: str = CONFIG["dify"]["knowledge_base"]["base_url"]
+
+
 class DifyKnowledgeBase:
     # 封装知识库api
 
-    def __init__(self):
-        self.api_key = CONFIG["dify"]["knowledge_base"]["api_key"]
-        self.base_url = CONFIG["dify"]["knowledge_base"]["base_url"]
+    def __init__(
+        self, dataset_name: Optional[str] = None, kb_config: KBConfig = KBConfig()
+    ):
+        self.kb_config = kb_config
         self.headers: dict = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {self.kb_config.api_key}",
         }
+        self.dataset_name: str = dataset_name
+        self._datasets: Dict[str, Any] = {}
+        self._dataset_id: str = ""
+        self._documents: Dict[str, Any] = {}  # itemKey -> document_id
+        self._metadata: Dict[str, Any] = {}  # metadata Name -> metadata id
+
+    @property
+    def datasets(self) -> Dict[str, Any]:
+        res = self.list_knowledge_base()
+        self._datasets = {item["name"]: item["id"] for item in res["data"]}
+        return self._datasets
+
+    @property
+    def dataset_id(self) -> str:
+        datasets = self.datasets
+        if self.dataset_name in datasets:
+            self._dataset_id = datasets[self.dataset_name]
+        else:
+            logger.info(f"Dataset name is not found in all datasets: {self._datasets}")
+            return None
+        return self._dataset_id
+
+    @property
+    def documents(self) -> Dict[str, Any]:
+        res = self.list_documents(self._dataset_id)
+        dict_res = {}
+        for item in res:
+            for fld in item["doc_metadata"]:
+                if fld["name"] == "itemKey":
+                    key = fld["value"]
+                    dict_res[key] = item["id"]
+        self._documents = dict_res
+        return self._documents
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        res = self.list_metadata(self._dataset_id)
+        self._metadata = {item["name"]: item["id"] for item in res}
+        return self._metadata
 
     def list_knowledge_base(self):
         # 知识库列表
-        url = f"{self.base_url}/datasets"
+        url = f"{self.kb_config.base_url}/datasets"
         response = requests.get(url, headers=self.headers)
         if response.status_code == 200:
             return response.json()
@@ -108,7 +154,7 @@ class DifyKnowledgeBase:
 
     def get_knowledge_base(self, dataset_id: str):
         # 查看知识库详情
-        url = f"{self.base_url}/datasets/{dataset_id}"
+        url = f"{self.kb_config.base_url}/datasets/{dataset_id}"
         response = requests.get(url, headers=self.headers)
         if response.status_code == 200:
             return response.json()
@@ -117,10 +163,25 @@ class DifyKnowledgeBase:
 
     def list_documents(self, dataset_id: str):
         # 查看知识库文档列表
-        url = f"{self.base_url}/datasets/{dataset_id}/documents"
+        url = f"{self.kb_config.base_url}/datasets/{dataset_id}/documents"
         response = requests.get(url, headers=self.headers)
         if response.status_code == 200:
-            return response.json()
+            res = response.json()
+            return res["data"]
+        else:
+            raise Exception(response.json())
+
+    def list_metadata(self, dataset_id: str):
+        """
+        获取文档元数据
+        :param dataset_id: 知识库ID
+        :return: API响应 id, name, type
+        """
+        url = f"{self.kb_config.base_url}/datasets/{dataset_id}/metadata"
+        response = requests.get(url, headers=self.headers)
+        if response.status_code == 200:
+            res = response.json()
+            return res["doc_metadata"]
         else:
             raise Exception(response.json())
 
@@ -128,7 +189,7 @@ class DifyKnowledgeBase:
         self, dataset_id: str, name: str, text: Optional[str] = None
     ):
         # 通过文本创建文档，严格参考curl示例
-        url = f"{self.base_url}/datasets/{dataset_id}/document/create-by-text"
+        url = f"{self.kb_config.base_url}/datasets/{dataset_id}/document/create-by-text"
         self.headers["Content-Type"] = "application/json"
         data = Document(name=name, text=text).to_json()
         response = requests.post(url, headers=self.headers, json=data)
@@ -144,7 +205,7 @@ class DifyKnowledgeBase:
         :param file_path: 本地文件路径
         :return: API响应
         """
-        url = f"{self.base_url}/datasets/{dataset_id}/document/create-by-file"
+        url = f"{self.kb_config.base_url}/datasets/{dataset_id}/document/create-by-file"
         # 构造data
         file_name = os.path.basename(file_path)
         data_dict = Document(name=file_name).to_json()
@@ -155,20 +216,7 @@ class DifyKnowledgeBase:
             file = {"file": (file_name, f)}
             response = requests.post(url, headers=self.headers, data=data, files=file)
         if response.status_code == 200:
-            return response.json()
-        else:
-            raise Exception(response.json())
-
-    def get_metadata_idict(self, dataset_id: str):
-        """
-        获取文档元数据
-        :param dataset_id: 知识库ID
-        :return: API响应 id, name, type
-        """
-        url = f"{self.base_url}/datasets/{dataset_id}/metadata"
-        response = requests.get(url, headers=self.headers)
-        if response.status_code == 200:
-            return response.json()
+            return response.json()["document"]["id"]
         else:
             raise Exception(response.json())
 
@@ -182,9 +230,9 @@ class DifyKnowledgeBase:
         :param metadata_vdict: 元数据 metadata [{'id':1,'name':name,'value':value}]  id, name, value
         :return: API响应
         """
-        url = f"{self.base_url}/datasets/{dataset_id}/documents/metadata"
+        url = f"{self.kb_config.base_url}/datasets/{dataset_id}/documents/metadata"
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {self.kb_config.api_key}",
             "Content-Type": "application/json",
         }
         data = {
@@ -201,3 +249,32 @@ class DifyKnowledgeBase:
             return response.json()
         else:
             raise Exception(f"Status: {response.status_code}, Detail: {response.text}")
+
+    def delete_document(self, dataset_id: str, document_id: str):
+        """
+        删除文档
+        :param dataset_id: 知识库ID
+        :param document_id: 文档ID
+        :return: API响应
+        """
+        url = f"{self.kb_config.base_url}/datasets/{dataset_id}/documents/{document_id}"
+        response = requests.delete(url, headers=self.headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(response.json())
+
+    def create_metadata(self, dataset_id: str, metadata_name: str, metadata_type: str):
+        """
+        创建元数据
+        :param dataset_id: 知识库ID
+        :param metadata_name: 元数据名称
+        :param metadata_type: 元数据类型
+        """
+        url = f"{self.kb_config.base_url}/datasets/{dataset_id}/metadata"
+        data = {
+            "name": metadata_name,
+            "type": metadata_type,
+        }
+        response = requests.post(url, headers=self.headers, json=data)
+        return response.json()

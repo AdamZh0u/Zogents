@@ -1,7 +1,7 @@
 .env
 .DS_Store
 data/
-
+# !tests/data/
 config/*.toml
 
 # Byte-compiled / optimized / DLL files

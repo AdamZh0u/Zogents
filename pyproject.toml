@@ -33,6 +33,7 @@ dependencies = [
     "whoosh>=2.7.4",
     "yfinance>=0.2.61",
     "zolocal>=0.2.0",
+    "duckdb",
 ]
 
 [dependency-groups]
@@ -68,3 +69,6 @@ major_version_zero = true
 
 # [tool.uv]
 # cache-dir = "E:\\.uv_cache" # win 缓存目录 需要在同一个硬盘
+
+[tool.poetry.dependencies]
+duckdb = "*"

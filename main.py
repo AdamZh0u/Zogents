@@ -1,32 +1,24 @@
-from pyprojroot import here
+from src.pipelines.files2dify import Pipeline
+from src.pipelines.zdb2dify import ZDB2DifyPipeline
+from src.config import CONFIG
 
-from src.parse import pipeline
-from src.zotero import zdb
 
-itemids = [2045, 2046]
+def run_files2dify():
+    pipeline = Pipeline(
+        kb_name=CONFIG["dify"]["knowledge_base"]["dataset_name"],
+    )
+    pipeline.upload_onefile("test.txt", {"tags": "test/1, test/2"})
+    pipeline.upload_batchfile(["test.txt", "test2.txt"], {"tags": "test/1, test/2"})
 
-attaches = zdb.get_attachments_by_itemid(*itemids)
 
-pdf_paths = [a.abspath for a in attaches]
+def run_zdb2dify():
+    pipeline = ZDB2DifyPipeline(
+        kb_name=CONFIG["dify"]["knowledge_base"]["dataset_name"],
+        tag_pattern="#%/%",  # sql regex matching zotero tags like #read/todo
+    )
+    pipeline.upload_zotero_attachments_to_dify()
 
-max_nst_o3m_config = pipeline.RunConfig(
-    use_serialized_tables=False,
-    parent_document_retrieval=True,
-    llm_reranking=True,
-    parallel_requests=25,
-    submission_name="Ilia Ris v.4",
-    pipeline_details="Custom pdf parsing + vDB + Router + Parent Document Retrieval + reranking + SO CoT; llm = o3-mini",
-    answering_model="o3-mini-2025-01-31",
-    config_suffix="_max_nst_o3m",
-)
 
-root_path = here() / "data" / "test_set"
-pl = pipeline.Pipeline(root_path, run_config=max_nst_o3m_config)
-
-pl.parse_pdf_reports_sequential(input_doc_paths=pdf_paths)
-pl.serialize_tables(max_workers=5)
-pl.merge_reports()
-# pipeline.export_reports_to_markdown()
-# pipeline.chunk_reports()
-# pipeline.create_vector_dbs()
-# pipeline.process_questions()
+if __name__ == "__main__":
+    # run_files2dify()
+    run_zdb2dify()
