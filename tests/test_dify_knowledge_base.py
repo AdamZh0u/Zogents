@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 import os
 from src.handler.dify_knowledge_base import DifyKnowledgeBase, Document
-from src.pipelines.files2dify import Pipeline
+from src.pipeline.files2dify import Pipeline
 
 
 def ensure_dummy_file(path, content="# Dummy test file\nThis is a test."):

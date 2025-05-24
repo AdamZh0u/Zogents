@@ -33,7 +33,6 @@ dependencies = [
     "whoosh>=2.7.4",
     "yfinance>=0.2.61",
     "zolocal>=0.2.0",
-    "duckdb",
 ]
 
 [dependency-groups]
