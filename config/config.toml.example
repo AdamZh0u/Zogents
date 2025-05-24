@@ -1,0 +1,7 @@
+[zotero]
+data_dir = "/Users/test/Zotero/"
+
+[dify.knowledge_base]
+dataset_name = "demo" # knowledge_base name
+api_key = "" # knowledge_base api  key
+base_url = "" # knowledge_base url

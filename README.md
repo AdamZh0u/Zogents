@@ -1,112 +1,128 @@
-# Project Template
+# Zogents
 
-`project-temp` – this is my project template that enhances development experience in VSCode with streamlined features.
+Zogents is a pipeline toolkit for integrating, processing, and synchronizing documents between a local Zotero database and the Dify knowledge base platform. It supports extracting attachments and metadata from Zotero, processing PDFs, and uploading them (with Zoterotags as metadata) to Dify for further knowledge management and retrieval.
 
-# How to use
-1. Clone the repository
+## Features
 
-```bash
-git clone https://github.com/your-username/project-temp.git
+- **Zotero Integration**:
+  - Connects to a local Zotero SQLite database.
+  - Extracts items, attachments, and tags, supporting advanced tag-based filtering (e.g., `#w/read`).
+- **PDF Processing Pipeline**:
+  - Supports batch processing of PDFs, including parsing, table serialization, merging, and chunking.
+  - Configurable pipeline steps for custom document workflows.
+- **Dify Knowledge Base Integration**:
+  - Uploads documents (PDFs or text) to Dify via API.
+  - Updates document metadata in Dify, including custom tags from Zotero.
+  - Supports batch and single-file operations.
+- **Configurable and Extensible**:
+  - Modular design for easy extension.
+  - Configuration via `config/` and environment variables.
+
+## Project Structure
+
+```
+Zogents/
+├── main.py                # Example entry point for running the pipeline
+├── src/
+│   ├── config.py          # Configuration and logger setup
+│   ├── dify_knowledge_base.py  # Dify API integration (upload, metadata, etc.)
+│   ├── zdb.py             # Zotero database access and query logic
+│   └── pipelines/
+│       ├── files2dify.py  # Pipeline for uploading local files to Dify
+│       └── zdb2dify.py    # Pipeline for syncing Zotero attachments to Dify
+├── tests/                 # Test scripts and data
+├── config/                # Configuration files (API keys, paths, etc.)
+├── data/                  # Example or working data directory
+└── README.md              # Project documentation
 ```
 
-2. Install dependencies
+## Quick Start
 
-```bash
-uv sync
+### 1. Configure
 
-# activate env
-source ./.venv/bin/activate
+- Set up your `config/` files with Zotero data directory and Dify API credentials.
+- Example config keys:
+  - `CONFIG["zotero"]["data_dir"]`
+  - `CONFIG["dify"]["knowledge_base"]["api_key"]`
+  - `CONFIG["dify"]["knowledge_base"]["base_url"]`
+  - `CONFIG["dify"]["knowledge_base"]["dataset_name"]`
+
+### 2. Extract and Upload Attachments
+
+Example: Extract all attachments with special tags from Zotero and upload to Dify:
+
+```python
+from src.pipelines.zdb2dify import ZDB2DifyPipeline
+
+pipeline = ZDB2DifyPipeline()
+pipeline.upload_zotero_attachments_to_dify()
 ```
 
-# Features
+### 3. Custom Pipeline Usage
 
-## settings
+You can also use the lower-level pipeline for local files:
 
-* Accessing the project root as a constant.
-* Load Parameters from the `.env` file
-    - In debug mode, parameters are loaded automatically.
-    - Running in the terminal mode need user settings `"python.experiments.optInto": ["pythonTerminalEnvVarActivation"]`
+```python
+from src.pipelines.files2dify import Pipeline
 
-## python modules
-
-* Plot utils
-* Databse utils
-
-## Tools
-
-### docker for development
-
-* Docker
-    - Build docker image
-
-```bash
-docker compose up -d
+pipeline = Pipeline(kb_name="YourKnowledgeBaseName")
+pipeline.run_onefile("path/to/file.pdf", {"tags": "tag1, tag2"})
 ```
 
-### uv - python package manager
+### 4. Main Pipeline Example
 
-* uv
+See `main.py` for a full example of extracting PDFs from Zotero and running the document processing pipeline.
 
-```bash
-source .venv/bin/activate # mac 
-.venv\Scripts\activate # win 
-```
+## Key Modules
 
-### tests
+- **src/zdb.py**:
+  Handles all interactions with the Zotero SQLite database, including item, attachment, and tag queries.
 
-* pytest + allure
+- **src/dify_knowledge_base.py**:
+  Encapsulates Dify API calls for document upload, metadata management, and knowledge base queries.
 
-### docs
+- **src/pipelines/files2dify.py**:
+  Provides a pipeline for uploading local files to Dify and updating their metadata.
 
-* mkdocs
+- **src/pipelines/zdb2dify.py**:
+  Orchestrates the extraction of attachments from Zotero and their upload to Dify, preserving tags as metadata.
 
-```bash
-mkdocs new [dir-name] # create a new project
+## Testing
 
-# start the live-reloading docs server
-mkdocs serve -f docs/mkdocs.yml
-```
-
-* mathjax support
-* mkdocstrings-python
-
-    - demo
-    - [Google Style Docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
-
-* gen-files
-
-    - [gen-files](https://mkdocstrings.github.io/recipes/)
-
-### jupyter
-
-* Jupyter Settings
-    - Run Jupyter notebooks from the project root.
-    - Enable the interactive mode for development.
-
-## pre-commit
-
-* pre-commit
+Test scripts are located in the `tests/` directory.
+You can run them with:
 
 ```bash
-pre-commit install
-
-# run pre-commit
-pre-commit run --all-files
+python -m unittest discover tests
 ```
 
-## github actions
+## Requirements
 
-* test locally
-    - act
-* release-please
-    - [release-please](https://github.com/googleapis/release-please)
-    - put github token in repo secrets
-* commit message
-    - [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
-        - vscode extension: [Conventional Commits](https://marketplace.visualstudio.com/items?itemName=vivaxy.vscode-conventional-commits)
-    - commitizen
-    - `cz bump --changelog` for updating changelog
+- Python 3.8+
+- requests
+- pyprojroot
+- (other dependencies, see `pyproject.toml`)
 
-# Reference
-* [VS Code Python Environments Documentation](https://code.visualstudio.com/docs/python/environments#_creating-environments)
-* [VS Code Python Issue #944](https://github.com/microsoft/vscode-python/issues/944)
+## License
+
+MIT License
+
+
+
+- attachementItem
+  - itemID
+  - itemKey
+  - title
+  - parentItemID
+  - parentItemKey
+  - parentItemTags
+  - contentType
+  - relpath
+
+- process
+  - get_parent_items_with_special_tag
+  - get_attachements_by_parent_item
+  - upload_zotero_attachments_to_dify
+  - check_attachment_exists
+  - upload_onefile
+  - update_all
