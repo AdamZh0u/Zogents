@@ -8,7 +8,7 @@ logger = get_logger()
 
 
 @dataclass
-class PipelineConfig:
+class PipeConfig:
     kb_name: str = "Files"
     metadata_fields: dict[str, str] = field(
         default_factory=lambda: {
@@ -29,7 +29,7 @@ class Pipeline:
     Handles dataset/document/metadata id management and batch operations.
     """
 
-    def __init__(self, pipe_config: PipelineConfig = None):
+    def __init__(self, pipe_config: PipeConfig = None):
         self.config = pipe_config
         self.dify_kb = DifyKnowledgeBase(dataset_name=self.config.kb_name)
         self.dataset_id: str = self.dify_kb.dataset_id

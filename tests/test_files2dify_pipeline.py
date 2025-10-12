@@ -1,6 +1,10 @@
 import unittest
 from unittest.mock import MagicMock, patch, PropertyMock
 from src.pipeline.files2dify import Pipeline, PipelineConfig
+=======
+from unittest.mock import patch, PropertyMock
+from src.pipeline.files2dify import Pipeline, PipeConfig
+>>>>>>> Stashed changes
 
 
 class TestFiles2DifyPipeline(unittest.TestCase):
@@ -20,6 +24,23 @@ class TestFiles2DifyPipeline(unittest.TestCase):
         self.mock_dkb.update_document_metadata.return_value = {"code": 200}
         
         self.config = PipelineConfig(kb_name="Files")
+=======
+        # Mock DifyKnowledgeBase before Pipeline instantiation
+        self.dkb_patcher = patch('src.pipeline.files2dify.DifyKnowledgeBase', autospec=True)
+        self.mock_dkb_cls = self.dkb_patcher.start()
+        self.mock_dkb = self.mock_dkb_cls.return_value
+
+        # Mock properties to avoid HTTP calls
+        type(self.mock_dkb).documents = PropertyMock(return_value={"dummy.md": "docid1"})
+        type(self.mock_dkb).metadata = PropertyMock(return_value={"tags": 1, "itemKey": 2})
+        self.mock_dkb.dataset_id = "ds1"
+
+        # Mock methods
+        self.mock_dkb.upload_document_by_file.return_value = {"document": {"id": "docid1", "name": "dummy.md"}}
+        self.mock_dkb.update_document_metadata.return_value = {"code": 200}
+
+        self.config = PipeConfig(kb_name="Files")
+>>>>>>> Stashed changes
         self.pipeline = Pipeline(self.config)
 
     def tearDown(self):
