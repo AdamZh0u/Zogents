@@ -1,6 +1,6 @@
 import unittest
-from unittest.mock import MagicMock, patch, PropertyMock
-from src.pipeline.files2dify import Pipeline, PipelineConfig
+from unittest.mock import patch, PropertyMock
+from src.pipeline.files2dify import Pipeline, PipeConfig
 
 
 class TestFiles2DifyPipeline(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestFiles2DifyPipeline(unittest.TestCase):
         self.mock_dkb.upload_document_by_file.return_value = {"document": {"id": "docid1", "name": "dummy.md"}}
         self.mock_dkb.update_document_metadata.return_value = {"code": 200}
         
-        self.config = PipelineConfig(kb_name="Files")
+        self.config = PipeConfig(kb_name="Files")
         self.pipeline = Pipeline(self.config)
 
     def tearDown(self):

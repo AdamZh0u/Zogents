@@ -28,6 +28,15 @@ class ParentItem:
             itemTypeID=d["itemTypeID"],
         )
 
+    def to_dict(self):
+        return {
+            "itemID": self.itemID,
+            "key": self.key,
+            "tags": self.tags,
+            "title": self.title,
+            "itemTypeID": self.itemTypeID,
+        }
+
 
 @dataclass(frozen=True)
 class Attachment:

@@ -58,6 +58,12 @@ docs = [
 # requires = ["uv"]
 # build-backend = "uv"
 
+[tool.pytest.ini_options]
+# src/ is imported as a package ("from src.pipeline import ...") but nothing
+# installs it, so the project root has to be on sys.path for the tests.
+pythonpath = ["."]
+testpaths = ["tests"]
+
 [tool.commitizen]
 name = "cz_conventional_commits"
 tag_format = "$major.$minor.$patch$prerelease"
