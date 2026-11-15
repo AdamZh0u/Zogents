@@ -5,3 +5,8 @@ data_dir = "/Users/test/Zotero/"
 dataset_name = "demo" # knowledge_base name
 api_key = "" # knowledge_base api  key
 base_url = "" # knowledge_base url
+
+[NOCODB]
+base_url = "https://app.nocodb.com"
+api_key = "your-nocodb-api-token"
+table_id = "your-table-id"
