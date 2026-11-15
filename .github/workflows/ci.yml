@@ -1,20 +1,15 @@
 name: ci
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [main]
+  pull_request:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
-      - run: uv sync --group docs
-      - name: Deploy to gh-pages branch
-        run: uv run mkdocs gh-deploy --force
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+      - run: uv run --frozen pytest -q
